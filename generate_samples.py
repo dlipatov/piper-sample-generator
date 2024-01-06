@@ -266,9 +266,14 @@ def generate_audio(
         x_lengths = x_lengths.cuda()
 
     x, m_p_orig, logs_p_orig, x_mask = model.enc_p(x, x_lengths)
-    emb0 = model.emb_g(speaker_1)
-    emb1 = model.emb_g(speaker_2)
-    g = slerp(emb0, emb1, slerp_weight).unsqueeze(-1)  # [b, h, 1]
+
+    
+    if speaker_1 != speaker_2:
+        emb0 = model.emb_g(speaker_1)
+        emb1 = model.emb_g(speaker_2)
+        g = slerp(emb0, emb1, slerp_weight).unsqueeze(-1)  # [b, h, 1]
+    else: 
+        g = None
 
     if model.use_sdp:
         logw = model.dp(x, x_mask, g=g, reverse=True, noise_scale=noise_scale_w)
