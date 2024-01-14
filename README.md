@@ -1,3 +1,7 @@
+This fork is changed to support single speaker models.
+Install piper using 'Getting started' section from [training readme](https://github.com/dlipatov/piper/blob/master/TRAINING.md#getting-started)
+Export your model from [checkpoint](https://huggingface.co/datasets/rhasspy/piper-checkpoints/tree/main) using [export script](https://github.com/rhasspy/piper-samples/blob/master/_script/export.sh)
+
 # Piper Sample Generator
 
 Generates samples using [Piper](https://github.com/rhasspy/piper/) for training a wake word system like [openWakeWord](https://github.com/dscripka/openWakeWord).
