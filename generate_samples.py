@@ -144,8 +144,12 @@ def generate_samples(
         slerp_weight, length_scale, noise_scale, noise_scale_w = next(settings_iter)
 
         with torch.no_grad():
-            speaker_1 = torch.LongTensor([s[0] for s in speakers_batch])
-            speaker_2 = torch.LongTensor([s[1] for s in speakers_batch])
+            if num_speakers == 1:
+                speaker_1 = None
+                speaker_2 = None
+            else:
+                speaker_1 = torch.LongTensor([s[0] for s in speakers_batch])
+                speaker_2 = torch.LongTensor([s[1] for s in speakers_batch])
 
             phoneme_ids = [
                 get_phonemes(voice, config, next(texts), verbose)
@@ -171,8 +175,8 @@ def generate_samples(
                     try:
                         audio = generate_audio(
                             model,
-                            speaker_1[0 : batch_size // counter],
-                            speaker_2[0 : batch_size // counter],
+                            speaker_1[0 : batch_size // counter] if speaker_1 is not None else None,
+                            speaker_2[0 : batch_size // counter] if speaker_2 is not None else None,
                             phoneme_ids[0 : batch_size // counter],
                             slerp_weight,
                             noise_scale,
@@ -260,18 +264,20 @@ def generate_audio(
     x_lengths = torch.LongTensor([len(i) for i in phoneme_ids])
 
     if torch.cuda.is_available():
-        speaker_1 = speaker_1.cuda()
-        speaker_2 = speaker_2.cuda()
+        if speaker_1 is not None:
+            if speaker_2 is not None:
+                    speaker_1 = speaker_1.cuda()
+                    speaker_2 = speaker_2.cuda()
         x = x.cuda()
         x_lengths = x_lengths.cuda()
 
     x, m_p_orig, logs_p_orig, x_mask = model.enc_p(x, x_lengths)
-
     
-    if speaker_1 != speaker_2:
-        emb0 = model.emb_g(speaker_1)
-        emb1 = model.emb_g(speaker_2)
-        g = slerp(emb0, emb1, slerp_weight).unsqueeze(-1)  # [b, h, 1]
+    if speaker_1 is not None:
+        if speaker_2 is not None:
+            emb0 = model.emb_g(speaker_1)        
+            emb1 = model.emb_g(speaker_2)
+            g = slerp(emb0, emb1, slerp_weight).unsqueeze(-1)  # [b, h, 1]
     else: 
         g = None
 
